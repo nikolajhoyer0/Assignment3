@@ -143,10 +143,8 @@ ispath_(G, X, Y, [X,'<-',A|Tail]) :-
   ispath_(NewG, X, Y, [A|Tail]).
 
 /* CASE 3 : End of Path list */
-ispath_(G, _, Y, [A,'->',Y]) :-
-  hasEdge(G, A, Y).
-ispath_(G, _, Y, [A,'<-',Y]) :-
-  hasEdge(G, Y, A).
+ispath_(G, _, Y, [A,'->',Y]) :- hasEdge(G, A, Y).
+ispath_(G, _, Y, [A,'<-',Y]) :- hasEdge(G, Y, A).
 
 /* CASE 4 : Running through each edge of the Path list */
 ispath_(G, X, Y, [A,'->',C|Tail]) :-
@@ -159,14 +157,7 @@ ispath_(G, X, Y, [A,'<-',C|Tail]) :-
   ispath_(NewG, X, Y, [C|Tail]).
 
 /*******************************************************************************
-
-HELPER FUNCTIONS
-
-These are self-implemented versions of some of the predicates from Prolog's
-standard library. Many of these predicates were given one or more descriptive
-wrappers in order to help make the use of the predicate clearer within the
-context of the code.
-
+HELPER PREDICATES
 *******************************************************************************/
 
 /* True if a path exists from A to B */
@@ -188,19 +179,19 @@ friendsWithAll(G, Name1, [Name2|Others]) :-
   friendsWithAll(NewG, Name1, Others).
 
 /*******************************************************************************
-
-STANDARD FUNCTIONS
+STANDARD PREDICATES
 
 These are self-implemented versions of some of the predicates from Prolog's
 standard library. Many of these predicates were given one or more descriptive
 wrappers in order to help make the use of the predicate clearer within the
 context of the code.
-
 *******************************************************************************/
 
 /* Descriptive wrappers for standard member function */
 isLiked(PersonX, PersonY_FriendList) :-
   member_main(PersonX, PersonY_FriendList).
+
+/* Descriptive wrapper for standard member function */
 inGraph(NodeX, Graph) :- member_main(NodeX, Graph).
 
 /*
@@ -209,7 +200,6 @@ inGraph(NodeX, Graph) :- member_main(NodeX, Graph).
  *                   L    - list              (list 'a')
  */
 member_main(Elem, L) :- member_helper(Elem, L).
-
 member_helper(X, [X|_]).
 member_helper(X, [_|Tail]) :- member_helper(X, Tail).
 
@@ -224,12 +214,10 @@ select_helper(E, [Not_E|Tail], [Not_E|Rest]) :-
   select_helper(E,Tail,Rest).
 
 /* Descriptive wrapper for standard last function */
-lastInPath([X|Xs], Last) :-
-  last_main(Xs, X, Last).
+lastInPath([X|Xs], Last) :- last_main(Xs, X, Last).
 
 last_main([], Last, Last).
-last_main([X|Xs], _, Last) :-
-  last_main(Xs, X, Last).
+last_main([X|Xs], _, Last) :- last_main(Xs, X, Last).
 
 /*******************************************************************************
 GRAPHS AND PATHS FOR TESTING
