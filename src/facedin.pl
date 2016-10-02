@@ -52,27 +52,25 @@ many paths from Susan to Jen in g0 is,
                     [susan,->,reed,->,tony,<-,jen]
 
 
-NOTE: The following code assumes that G is a fully instantiated, well-formed
+NOTE: The following module assumes that G is a fully instantiated, well-formed
 friend graph.
 *******************************************************************************/
-
-/* If we want to use this as a module, then this works. */
-:- module(facedin,
-     [buddies/3,
-      clique/2,
-      admirer/2,
-      idol/2,
-      ispath/4]).
+%% :- module(facedin,
+%%      [buddies/3,
+%%       clique/2,
+%%       admirer/2,
+%%       idol/2,
+%%       ispath/4]).
 
 
-/*
- * buddies/3
+/* buddies/3
  * True if person X and Y are buddies in the social network G, specifically
  * when both X likes Y and Y like X are true.
  *    G -> social network   (list of compound terms)
  *    X -> person's name    (atom)
  *    Y -> person's name    (atom)
  */
+
 buddies(G, X, Y) :-
   NodeX = person(X, XList),  % unpack data structure
   NodeY = person(Y, YList),
@@ -81,13 +79,14 @@ buddies(G, X, Y) :-
   isLiked(X, YList),         % Y likes X
   isLiked(Y, XList).         % X likes Y
 
-/*
- * clique/2
+
+/* clique/2
  * True when L is a duplicate-free list of names that form a clique in the
  * friend graph G.
  *     G -> social network   (list of compound terms)
  *     L -> names in clique  (list of atoms)
  */
+
 clique(G, L) :- clique_(G, L).
 
 clique_(G, [Name1, Name2]) :- buddies(G, Name1, Name2).
@@ -96,23 +95,24 @@ clique_(G, [Name|Others])  :-
   removeNode(Name, G, NewG),
   clique_(NewG, Others).
 
-/*
- * admirer/2
+
+/* admirer/2
  * True whenever person X is an admirer in the social network G.
  *    G -> social network   (list of compound terms)
  *    X -> person's name    (atom)
  */
+
 admirer(G, Admirer) :-
   removeNode(Admirer, G, NewG),
   isAdmirer(G, Admirer, NewG).
 
-isAdmirer(_, _, []).
+isAdmirer(_, _, []).  % no one left to admire
 isAdmirer(G, Admirer, [person(P,_)|Others]) :-
   hasPath(G, Admirer, P),
   isAdmirer(G, Admirer, Others).
 
-/*
- * idol/2
+
+/* idol/2
  * True whenever person X is an idol in the social network G.
  *    G -> social network   (list of compound terms)
  *    X -> person's name    (atom)
@@ -126,13 +126,11 @@ isIdol(G, Idol, [person(P,_)|Others]) :-
   hasPath(G, P, Idol),
   isIdol(G, Idol, Others).
 
-/*
- * Define a predicate ispath(G, X, Y, P) that holds whenever P is a path from
+
+
+
+/* Define a predicate ispath(G, X, Y, P) that holds whenever P is a path from
  * X to Y in G.
- *    G -> social network   (list of compound terms)
- *    X -> person's name    (atom)
- *    Y -> person's name    (atom)
- *    P -> path             (list of atoms)
  */
 ispath(G, X, Y, P) :- ispath_(G, X, Y, P).
 
@@ -151,9 +149,9 @@ ispath_(G, X, Y, [X,'<-',A|Tail]) :-
   ispath_(NewG, X, Y, [A|Tail]).
 
 /* CASE 3 : End of Path list */
-ispath_(G, _, Y, [A,'->',Y|[]]) :-
+ispath_(G, _, Y, [A,'->',Y]) :-
   hasEdge(G, A, Y).
-ispath_(G, _, Y, [A,'<-',Y|[]]) :-
+ispath_(G, _, Y, [A,'<-',Y]) :-
   hasEdge(G, Y, A).
 
 /* CASE 4 : Running through each edge of the Path list */
@@ -167,12 +165,17 @@ ispath_(G, X, Y, [A,'<-',C|Tail]) :-
   ispath_(NewG, X, Y, [C|Tail]).
 
 
+
+
 /*******************************************************************************
+
 HELPER FUNCTIONS
+
 These are self-implemented versions of some of the predicates from Prolog's
 standard library. Many of these predicates were given one or more descriptive
 wrappers in order to help make the use of the predicate clearer within the
 context of the code.
+
 *******************************************************************************/
 
 /* True if a path exists from A to B */
@@ -187,6 +190,7 @@ hasEdge(G, X, Y) :-
   select_main(person(X, XFriends), G, _),
   isLiked(Y, XFriends).
 
+
 friendsWithAll(G, Name1, [Name2]) :- buddies(G, Name1, Name2).
 friendsWithAll(G, Name1, [Name2|Others]) :-
   buddies(G, Name1, Name2),
@@ -194,12 +198,17 @@ friendsWithAll(G, Name1, [Name2|Others]) :-
   friendsWithAll(NewG, Name1, Others).
 
 
+
+
 /*******************************************************************************
+
 STANDARD FUNCTIONS
+
 These are self-implemented versions of some of the predicates from Prolog's
 standard library. Many of these predicates were given one or more descriptive
 wrappers in order to help make the use of the predicate clearer within the
 context of the code.
+
 *******************************************************************************/
 
 /* Descriptive wrappers for standard member function */
@@ -207,8 +216,7 @@ isLiked(PersonX, PersonY_FriendList) :-
   member_main(PersonX, PersonY_FriendList).
 inGraph(NodeX, Graph) :- member_main(NodeX, Graph).
 
-/*
- * member_main/2 : True when the element E is a member of the list L.
+/* member_main/2 : True when the element E is a member of the list L.
  *                   Elem - element of list   ('a')
  *                   L    - list              (list 'a')
  */
@@ -217,15 +225,19 @@ member_main(Elem, L) :- member_helper(Elem, L).
 member_helper(X, [X|_]).
 member_helper(X, [_|Tail]) :- member_helper(X, Tail).
 
+
 /* Descriptive wrapper for standard select function */
 removeNode(Name, Graph, NewGraph) :-
   select_main(person(Name,_), Graph, NewGraph).
 
-/* select_main/3 : Trun when List1, with element E is the same as List2 */
+/* select_main/3 : Trun when List1, with element E is the same as List2
+ *
+ */
 select_main(E, List1, List2) :- select_helper(E, List1, List2).
-select_helper(E, [E|Tail], Rest).
+select_helper(E, [E|Tail], Tail).
 select_helper(E, [Not_E|Tail], [Not_E|Rest]) :-
   select_helper(E,Tail,Rest).
+
 
 /* Descriptive wrapper for standard last function */
 lastInPath([X|Xs], Last) :-
@@ -234,6 +246,9 @@ lastInPath([X|Xs], Last) :-
 last_main([], Last, Last).
 last_main([X|Xs], _, Last) :-
   last_main(Xs, X, Last).
+
+
+
 
 
 /*******************************************************************************
