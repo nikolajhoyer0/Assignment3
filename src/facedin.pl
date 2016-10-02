@@ -377,7 +377,8 @@ test(idol_g0) :-
 test(ispath_g0_pass) :-
   g0(G),
   p0(P),
-  ispath(G, susan, jen, P).
+  setof(P, G^ispath(G, susan, jen, P), Result),
+  Result = [P].
 
 
 /*  Expected result is pass. */
