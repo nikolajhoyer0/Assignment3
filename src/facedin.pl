@@ -56,6 +56,15 @@ NOTE: The following code assumes that G is a fully instantiated, well-formed
 friend graph.
 *******************************************************************************/
 
+/* If we want to use this as a module, then this works. */
+:- module(facedin,
+     [buddies/3,
+      clique/2,
+      admirer/2,
+      idol/2,
+      ispath/4]).
+
+
 /*
  * buddies/3
  * True if person X and Y are buddies in the social network G, specifically
@@ -120,6 +129,10 @@ isIdol(G, Idol, [person(P,_)|Others]) :-
 /*
  * Define a predicate ispath(G, X, Y, P) that holds whenever P is a path from
  * X to Y in G.
+ *    G -> social network   (list of compound terms)
+ *    X -> person's name    (atom)
+ *    Y -> person's name    (atom)
+ *    P -> path             (list of atoms)
  */
 ispath(G, X, Y, P) :- ispath_(G, X, Y, P).
 
@@ -153,15 +166,13 @@ ispath_(G, X, Y, [A,'<-',C|Tail]) :-
   removeNode(A, G, NewG),
   ispath_(NewG, X, Y, [C|Tail]).
 
+
 /*******************************************************************************
-
 HELPER FUNCTIONS
-
 These are self-implemented versions of some of the predicates from Prolog's
 standard library. Many of these predicates were given one or more descriptive
 wrappers in order to help make the use of the predicate clearer within the
 context of the code.
-
 *******************************************************************************/
 
 /* True if a path exists from A to B */
@@ -182,15 +193,13 @@ friendsWithAll(G, Name1, [Name2|Others]) :-
   removeNode(Name2, G, NewG),
   friendsWithAll(NewG, Name1, Others).
 
+
 /*******************************************************************************
-
 STANDARD FUNCTIONS
-
 These are self-implemented versions of some of the predicates from Prolog's
 standard library. Many of these predicates were given one or more descriptive
 wrappers in order to help make the use of the predicate clearer within the
 context of the code.
-
 *******************************************************************************/
 
 /* Descriptive wrappers for standard member function */
@@ -226,26 +235,141 @@ last_main([], Last, Last).
 last_main([X|Xs], _, Last) :-
   last_main(Xs, X, Last).
 
+
 /*******************************************************************************
-
 GRAPHS AND PATHS FOR TESTING
-
 *******************************************************************************/
-
 g0([person(ralf, [susan, ken]),
     person(ken, [ralf]),
     person(susan, [reed, jessica, jen, ralf]),
     person(reed, [tony, jessica]),
     person(jessica, [jen]),
     person(tony, []),
-    person(jen, [susan, jessica, tony])]).
+    person(jen, [susan, jessica, tony])
+    ]).
 
+
+% Connected Ken and Susan to make a clique of size 3.
 g1([person(ralf, [susan, ken]),
     person(ken, [ralf, susan]),
     person(susan, [reed, jessica, jen, ralf, ken]),
     person(reed, [tony, jessica]),
     person(jessica, [jen]),
     person(tony, []),
-    person(jen, [susan, jessica, tony])]).
+    person(jen, [susan, jessica, tony])
+    ]).
+
+% No buddies.
+g2([person(ralf, [susan]),
+    person(ken, [ralf]),
+    person(susan, [ken])
+    ]).
+
+% One admirer, tony.
+g3([person(ralf, [susan]),
+    person(ken, [ralf]),
+    person(susan, [reed]),
+    person(reed, [jessica]),
+    person(jessica, [jen]),
+    person(tony, []),
+    person(jen, [tony])
+    ]).
 
 p0([susan,->,reed,->,tony,<-,jen]).
+
+
+
+/*******************************************************************************
+    BASIC UNIT TESTING
+*******************************************************************************/
+:- begin_tests(basic).
+
+
+test(buddies_g0) :-
+  g0(G),
+  setof((X,Y), G^buddies(G, X, Y), BuddyPairs),
+  msort(BuddyPairs, SortedPairs),
+  msort([(ken, ralf),
+         (ralf, ken),
+         (ralf, susan),
+         (susan, ralf),
+         (susan, jen),
+         (jen,susan),
+         (jen, jessica),
+         (jessica, jen)
+         ], SortedPairs).
+
+
+/*  No buddies in g2, expect a fail.  */
+test(buddies_g2, fail) :-
+  g2(G),
+  buddies(G, _, _).
+
+
+/*  Since there are no cliques larger than size 2 in g0, then both clique/2 and
+ *  buddies/3 should return the same results.
+ */
+test(clique_g0) :-
+  g0(G),
+  setof(C, G^clique(G, C), Cliques),
+  setof([X,Y], G^buddies(G, X, Y), Buddies),
+  msort(Cliques, Sorted),
+  msort(Buddies, Sorted).
+
+
+/*  Since g1 has one click of size 3, then the expected result is all the
+ *  buddy pairs plus all the permutations of ken, susan and ralf as a clique.
+ */
+test(clique_g1) :-
+  g1(G),
+  setof(C, G^clique(G, C), Cliques),
+  setof([X,Y], G^buddies(G, X, Y), Buddies),
+  CliqueSize3 = [[ken, ralf, susan],
+                 [ken, susan, ralf],
+                 [susan, ken, ralf],
+                 [susan, ralf, ken],
+                 [ralf, ken, susan],
+                 [ralf, susan, ken]
+                 ],
+  append(Buddies, CliqueSize3, Expected),
+  msort(Cliques, Sorted),
+  msort(Expected, Sorted).
+
+
+/*  Expected result is that everyone except tony is an admirer in g0. */
+test(admirers_g0) :-
+  g0(G),
+  setof(Person, G^admirer(G, Person), Admirers),
+  msort(Admirers, Sorted),
+  msort([ken, ralf, susan, jen, jessica, reed], Sorted).
+
+
+/*  Expected result is that ken is the only admirer in g3. */
+test(admirers_g3) :-
+  g3(G),
+  setof(Person, G^admirer(G, Person), Admirers),
+  msort(Admirers, [ken]).
+
+
+/*  Expected result is that tony is the only idol in g0. */
+test(idol_g0) :-
+  g0(G),
+  setof(Person, G^idol(G, Person), Idols),
+  msort(Idols, [tony]).
+
+
+/*  Expected result is pass. */
+test(ispath_g0_pass) :-
+  g0(G),
+  p0(P),
+  ispath(G, susan, jen, P).
+
+
+/*  Expected result is pass. */
+test(ispath_g0_fail, fail) :-
+  g0(G),
+  p0(P),
+  ispath(G, ralf, jen, P).
+
+:- end_tests(basic).
+:- run_tests.
