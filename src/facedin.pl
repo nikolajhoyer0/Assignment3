@@ -51,7 +51,6 @@ many paths from Susan to Jen in g0 is,
 
                     [susan,->,reed,->,tony,<-,jen]
 
-
 NOTE: The following module assumes that G is a fully instantiated, well-formed
 friend graph.
 *******************************************************************************/
@@ -62,15 +61,14 @@ friend graph.
 %%       idol/2,
 %%       ispath/4]).
 
-
-/* buddies/3
+/*
+ * buddies/3
  * True if person X and Y are buddies in the social network G, specifically
  * when both X likes Y and Y like X are true.
  *    G -> social network   (list of compound terms)
  *    X -> person's name    (atom)
  *    Y -> person's name    (atom)
  */
-
 buddies(G, X, Y) :-
   NodeX = person(X, XList),  % unpack data structure
   NodeY = person(Y, YList),
@@ -79,14 +77,13 @@ buddies(G, X, Y) :-
   isLiked(X, YList),         % Y likes X
   isLiked(Y, XList).         % X likes Y
 
-
-/* clique/2
+/*
+ * clique/2
  * True when L is a duplicate-free list of names that form a clique in the
  * friend graph G.
  *     G -> social network   (list of compound terms)
  *     L -> names in clique  (list of atoms)
  */
-
 clique(G, L) :- clique_(G, L).
 
 clique_(G, [Name1, Name2]) :- buddies(G, Name1, Name2).
@@ -95,13 +92,12 @@ clique_(G, [Name|Others])  :-
   removeNode(Name, G, NewG),
   clique_(NewG, Others).
 
-
-/* admirer/2
+/*
+ * admirer/2
  * True whenever person X is an admirer in the social network G.
  *    G -> social network   (list of compound terms)
  *    X -> person's name    (atom)
  */
-
 admirer(G, Admirer) :-
   removeNode(Admirer, G, NewG),
   isAdmirer(G, Admirer, NewG).
@@ -111,8 +107,8 @@ isAdmirer(G, Admirer, [person(P,_)|Others]) :-
   hasPath(G, Admirer, P),
   isAdmirer(G, Admirer, Others).
 
-
-/* idol/2
+/*
+ * idol/2
  * True whenever person X is an idol in the social network G.
  *    G -> social network   (list of compound terms)
  *    X -> person's name    (atom)
@@ -126,10 +122,8 @@ isIdol(G, Idol, [person(P,_)|Others]) :-
   hasPath(G, P, Idol),
   isIdol(G, Idol, Others).
 
-
-
-
-/* Define a predicate ispath(G, X, Y, P) that holds whenever P is a path from
+/*
+ * Define a predicate ispath(G, X, Y, P) that holds whenever P is a path from
  * X to Y in G.
  */
 ispath(G, X, Y, P) :- ispath_(G, X, Y, P).
@@ -164,9 +158,6 @@ ispath_(G, X, Y, [A,'<-',C|Tail]) :-
   removeNode(A, G, NewG),
   ispath_(NewG, X, Y, [C|Tail]).
 
-
-
-
 /*******************************************************************************
 
 HELPER FUNCTIONS
@@ -190,15 +181,11 @@ hasEdge(G, X, Y) :-
   select_main(person(X, XFriends), G, _),
   isLiked(Y, XFriends).
 
-
 friendsWithAll(G, Name1, [Name2]) :- buddies(G, Name1, Name2).
 friendsWithAll(G, Name1, [Name2|Others]) :-
   buddies(G, Name1, Name2),
   removeNode(Name2, G, NewG),
   friendsWithAll(NewG, Name1, Others).
-
-
-
 
 /*******************************************************************************
 
@@ -216,7 +203,8 @@ isLiked(PersonX, PersonY_FriendList) :-
   member_main(PersonX, PersonY_FriendList).
 inGraph(NodeX, Graph) :- member_main(NodeX, Graph).
 
-/* member_main/2 : True when the element E is a member of the list L.
+/*
+ * member_main/2 : True when the element E is a member of the list L.
  *                   Elem - element of list   ('a')
  *                   L    - list              (list 'a')
  */
@@ -225,19 +213,15 @@ member_main(Elem, L) :- member_helper(Elem, L).
 member_helper(X, [X|_]).
 member_helper(X, [_|Tail]) :- member_helper(X, Tail).
 
-
 /* Descriptive wrapper for standard select function */
 removeNode(Name, Graph, NewGraph) :-
   select_main(person(Name,_), Graph, NewGraph).
 
-/* select_main/3 : Trun when List1, with element E is the same as List2
- *
- */
+/* select_main/3 : Trun when List1, with element E is the same as List2 */
 select_main(E, List1, List2) :- select_helper(E, List1, List2).
 select_helper(E, [E|Tail], Tail).
 select_helper(E, [Not_E|Tail], [Not_E|Rest]) :-
   select_helper(E,Tail,Rest).
-
 
 /* Descriptive wrapper for standard last function */
 lastInPath([X|Xs], Last) :-
@@ -246,10 +230,6 @@ lastInPath([X|Xs], Last) :-
 last_main([], Last, Last).
 last_main([X|Xs], _, Last) :-
   last_main(Xs, X, Last).
-
-
-
-
 
 /*******************************************************************************
 GRAPHS AND PATHS FOR TESTING
@@ -262,7 +242,6 @@ g0([person(ralf, [susan, ken]),
     person(tony, []),
     person(jen, [susan, jessica, tony])
     ]).
-
 
 % Connected Ken and Susan to make a clique of size 3.
 g1([person(ralf, [susan, ken]),
@@ -292,13 +271,10 @@ g3([person(ralf, [susan]),
 
 p0([susan,->,reed,->,tony,<-,jen]).
 
-
-
 /*******************************************************************************
     BASIC UNIT TESTING
 *******************************************************************************/
 :- begin_tests(basic).
-
 
 test(buddies_g0) :-
   g0(G),
@@ -314,15 +290,14 @@ test(buddies_g0) :-
          (jessica, jen)
          ], SortedPairs).
 
-
 /*  No buddies in g2, expect a fail.  */
 test(buddies_g2, fail) :-
   g2(G),
   buddies(G, _, _).
 
-
-/*  Since there are no cliques larger than size 2 in g0, then both clique/2 and
- *  buddies/3 should return the same results.
+/*
+ * Since there are no cliques larger than size 2 in g0, then both clique/2 and
+ * buddies/3 should return the same results.
  */
 test(clique_g0) :-
   g0(G),
@@ -331,9 +306,9 @@ test(clique_g0) :-
   msort(Cliques, Sorted),
   msort(Buddies, Sorted).
 
-
-/*  Since g1 has one click of size 3, then the expected result is all the
- *  buddy pairs plus all the permutations of ken, susan and ralf as a clique.
+/*
+ * Since g1 has one click of size 3, then the expected result is all the
+ * buddy pairs plus all the permutations of ken, susan and ralf as a clique.
  */
 test(clique_g1) :-
   g1(G),
@@ -350,7 +325,6 @@ test(clique_g1) :-
   msort(Cliques, Sorted),
   msort(Expected, Sorted).
 
-
 /*  Expected result is that everyone except tony is an admirer in g0. */
 test(admirers_g0) :-
   g0(G),
@@ -358,13 +332,11 @@ test(admirers_g0) :-
   msort(Admirers, Sorted),
   msort([ken, ralf, susan, jen, jessica, reed], Sorted).
 
-
 /*  Expected result is that ken is the only admirer in g3. */
 test(admirers_g3) :-
   g3(G),
   setof(Person, G^admirer(G, Person), Admirers),
   msort(Admirers, [ken]).
-
 
 /*  Expected result is that tony is the only idol in g0. */
 test(idol_g0) :-
@@ -372,14 +344,12 @@ test(idol_g0) :-
   setof(Person, G^idol(G, Person), Idols),
   msort(Idols, [tony]).
 
-
 /*  Expected result is pass. */
 test(ispath_g0_pass) :-
   g0(G),
   p0(P),
   setof(P, G^ispath(G, susan, jen, P), Result),
   Result = [P].
-
 
 /*  Expected result is pass. */
 test(ispath_g0_fail, fail) :-
